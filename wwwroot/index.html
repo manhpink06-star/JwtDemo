@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>Demo JWT</title>
+    <style>
+        body {
+            font-family: Arial;
+            max-width: 500px;
+            margin: 40px auto;
+        }
+
+        input, button {
+            padding: 8px;
+            margin: 4px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        pre {
+            background: #f3f3f3;
+            padding: 10px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <h2>Đăng nhập</h2>
+    <input id="username" placeholder="Username (admin hoặc user)" />
+    <input id="password" type="password" placeholder="Password (123456)" />
+    <button onclick="login()">Đăng nhập</button>
+
+    <h3>Gọi API (gửi JWT trong header)</h3>
+    <button onclick="callApi('/api/user-data')">Chức năng USER</button>
+    <button onclick="callApi('/api/admin-data')">Chức năng ADMIN</button>
+
+    <h3>Kết quả</h3>
+    <pre id="result">Chưa có dữ liệu</pre>
+
+    <script>
+    let jwt = null;
+    const show = t => document.getElementById('result').textContent = t;
+
+    async function login() {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('username').value,
+          password: document.getElementById('password').value
+        })
+      });
+      if (!res.ok) { jwt = null; show('Đăng nhập thất bại (unauthorized)'); return; }
+      const data = await res.json();
+      jwt = data.token;
+      show('Đăng nhập thành công! Role: ' + data.role + '\n\nJWT:\n' + jwt);
+    }
+
+    async function callApi(url) {
+      const res = await fetch(url, {
+        headers: jwt ? { 'Authorization': 'Bearer ' + jwt } : {}
+      });
+      if (res.ok) {
+        const d = await res.json();
+        show('AUTHORIZED (200): ' + d.message);
+      } else {
+        show('UNAUTHORIZED (' + res.status + '): không cho phép truy cập chức năng này');
+      }
+    }
+    </script>
+</body>
+</html>
